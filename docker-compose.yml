@@ -36,26 +36,6 @@ services:
       - joomla-data:/var/www/html
     restart: always
 
-  # === GitLab ===
-  gitlab:
-    image: gitlab/gitlab-ce:latest
-    container_name: gitlab
-    environment:
-      GITLAB_OMNIBUS_CONFIG: |
-        external_url 'http://gitlab.dxi'
-    labels:
-      - "traefik.http.routers.gitlab.rule=Host(`gitlab.dxi`)"
-    networks:
-      - appnet
-    ports:
-      - "8083:80"  # Cambié 8081 por 8083
-      - "2222:22"
-    volumes:
-      - gitlab-data:/var/opt/gitlab
-      - gitlab-config:/etc/gitlab
-      - gitlab-logs:/var/log/gitlab
-    restart: always
-
 
   joomla-db:
     image: mysql:8.0
@@ -126,9 +106,6 @@ volumes:
   wikijs-db:
   joomla-data:
   joomla-db:
-  gitlab-data:
-  gitlab-config:
-  gitlab-logs:
 
 networks:
   appnet:
