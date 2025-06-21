@@ -1,0 +1,135 @@
+version: "3.8"
+
+services:
+  # === Cloud Commander ===
+  cloudcmd:
+    image: coderaiser/cloudcmd
+    container_name: cloudcmd
+    environment:
+      - AUTH=true
+      - USER=admin
+      - PASS=admin
+    labels:
+      - "traefik.http.routers.drive.rule=Host(`drive.dxi`)"
+    networks:
+      - appnet
+    volumes:
+      - ./data:/mnt/fs
+    restart: always
+
+  # === Joomla ===
+  joomla:
+    image: joomla
+    container_name: joomla
+    depends_on:
+      - joomla-db
+    environment:
+      - JOOMLA_DB_HOST=joomla-db
+      - JOOMLA_DB_USER=joomla
+      - JOOMLA_DB_PASSWORD=joomlapass
+      - JOOMLA_DB_NAME=joomla
+    labels:
+      - "traefik.http.routers.joomla.rule=Host(`joomla.dxi`)"
+    networks:
+      - appnet
+    volumes:
+      - joomla-data:/var/www/html
+    restart: always
+
+  # === GitLab ===
+  gitlab:
+    image: gitlab/gitlab-ce:latest
+    container_name: gitlab
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://gitlab.dxi'
+    labels:
+      - "traefik.http.routers.gitlab.rule=Host(`gitlab.dxi`)"
+    networks:
+      - appnet
+    ports:
+      - "8083:80"  # Cambié 8081 por 8083
+      - "2222:22"
+    volumes:
+      - gitlab-data:/var/opt/gitlab
+      - gitlab-config:/etc/gitlab
+      - gitlab-logs:/var/log/gitlab
+    restart: always
+
+
+  joomla-db:
+    image: mysql:8.0
+    container_name: joomla-db
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: joomla
+      MYSQL_USER: joomla
+      MYSQL_PASSWORD: joomlapass
+    volumes:
+      - joomla-db:/var/lib/mysql
+    networks:
+      - appnet
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+
+  # === Wiki.js ===
+  wikijs:
+    image: requarks/wiki:2
+    container_name: wikijs
+    environment:
+      DB_TYPE: postgres
+      DB_HOST: postgres-wiki
+      DB_PORT: 5432
+      DB_USER: wikijs
+      DB_PASS: wikijsrocks
+      DB_NAME: wiki
+    depends_on:
+      - postgres-wiki
+    labels:
+      - "traefik.http.routers.wikijs.rule=Host(`wiki.dxi`)"
+    networks:
+      - appnet
+
+  postgres-wiki:
+    image: postgres:15
+    container_name: postgres-wiki
+    environment:
+      POSTGRES_DB: wiki
+      POSTGRES_USER: wikijs
+      POSTGRES_PASSWORD: wikijsrocks
+    volumes:
+      - wikijs-db:/var/lib/postgresql/data
+    networks:
+      - appnet
+
+  # === Traefik Proxy ===
+  traefik:
+    image: traefik:v2.10
+    container_name: traefik
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "8081:80"   # Cambié 80 por 8081 para evitar conflicto
+      - "8082:8080" # Cambié 8080 por 8082
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - appnet
+
+volumes:
+  wikijs-db:
+  joomla-data:
+  joomla-db:
+  gitlab-data:
+  gitlab-config:
+  gitlab-logs:
+
+networks:
+  appnet:
+    driver: bridge
