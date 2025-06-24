@@ -86,6 +86,22 @@ services:
     networks:
       - appnet
 
+
+
+  # === Focalboard ===
+  focalboard:
+    image: mattermost/focalboard
+    container_name: focalboard
+    environment:
+      - DB_TYPE=sqlite3
+    labels:
+      - "traefik.http.routers.focalboard.rule=Host(`jira.dxi`)"
+    networks:
+      - appnet
+    volumes:
+      - focalboard-data:/opt/focalboard/data
+    restart: always
+
   # === Traefik Proxy ===
   traefik:
     image: traefik:v2.10
@@ -95,17 +111,42 @@ services:
       - "--providers.docker=true"
       - "--entrypoints.web.address=:80"
     ports:
-      - "8081:80"   # Cambié 80 por 8081 para evitar conflicto
-      - "8082:8080" # Cambié 8080 por 8082
+      - "80:80"
+      - "8082:8080"
+
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - appnet
 
+  pihole:
+    container_name: pihole
+    image: pihole/pihole:latest
+    environment:
+      TZ: 'America/Mexico_City'
+      WEBPASSWORD: 'admin' # Cambia esta contraseña si quieres
+      ServerIP: 192.168.0.14 # IP LAN de tu laptop (no localhost)
+    labels:
+      - "traefik.http.routers.pihole.rule=Host(`pi.hole.dxi`)"
+    volumes:
+      - pihole-config:/etc/pihole
+      - pihole-dnsmasq:/etc/dnsmasq.d
+    networks:
+      - appnet
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+    restart: unless-stopped
+
+
 volumes:
   wikijs-db:
   joomla-data:
   joomla-db:
+  focalboard-data:
+  pihole-config:
+  pihole-dnsmasq:
+
 
 networks:
   appnet:
