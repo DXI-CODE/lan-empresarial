@@ -124,10 +124,10 @@ services:
     image: pihole/pihole:latest
     environment:
       TZ: 'America/Mexico_City'
-      WEBPASSWORD: 'admin' # Cambia esta contraseña si quieres
-      ServerIP: 192.168.0.14 # IP LAN de tu laptop (no localhost)
+      WEBPASSWORD: 'admin'
+      ServerIP: 192.168.0.14
     labels:
-      - "traefik.http.routers.pihole.rule=Host(`pi.hole.dxi`)"
+      - "traefik.http.routers.pihole.rule=Host(`pihole.dxi`)"
     volumes:
       - pihole-config:/etc/pihole
       - pihole-dnsmasq:/etc/dnsmasq.d
