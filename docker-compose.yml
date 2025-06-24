@@ -119,33 +119,12 @@ services:
     networks:
       - appnet
 
-  pihole:
-    container_name: pihole
-    image: pihole/pihole:latest
-    environment:
-      TZ: 'America/Mexico_City'
-      WEBPASSWORD: 'admin'
-      ServerIP: 192.168.0.14
-    labels:
-      - "traefik.http.routers.pihole.rule=Host(`pihole.dxi`)"
-    volumes:
-      - pihole-config:/etc/pihole
-      - pihole-dnsmasq:/etc/dnsmasq.d
-    networks:
-      - appnet
-    ports:
-      - "53:53/tcp"
-      - "53:53/udp"
-    restart: unless-stopped
-
 
 volumes:
   wikijs-db:
   joomla-data:
   joomla-db:
   focalboard-data:
-  pihole-config:
-  pihole-dnsmasq:
 
 
 networks:
