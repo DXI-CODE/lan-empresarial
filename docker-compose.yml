@@ -102,6 +102,21 @@ services:
       - focalboard-data:/opt/focalboard/data
     restart: always
 
+
+  onlyoffice:
+    image: onlyoffice/documentserver
+    container_name: onlyoffice
+    labels:
+      - "traefik.http.routers.onlyoffice.rule=Host(`office.dxi`)"
+    networks:
+      - appnet
+    volumes:
+      - onlyoffice-data:/var/www/onlyoffice/Data
+    restart: always
+    extra_hosts:
+      - "office.dxi:127.0.0.1"
+
+
   # === Traefik Proxy ===
   traefik:
     image: traefik:v2.10
@@ -125,7 +140,7 @@ volumes:
   joomla-data:
   joomla-db:
   focalboard-data:
-
+  onlyoffice-data:
 
 networks:
   appnet:
